@@ -1,0 +1,66 @@
+<!doctype html>
+<!-- Challenge link page. Published as https://kshetty851-bit.github.io/gully-cup-privacy/c.html (copy this file into the
+     gully-cup-privacy repo). A shared link is c.html#GC-XXXX-XXXX: on Android it opens the game on the code box
+     (gullycricket://duel/<code>), or the Play Store if the game isn't installed. The code reader is the game's own (duelRead). -->
+<html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Gully Cricket challenge</title>
+<meta name="description" content="A friend has challenged you to a 2-over chase in Gully Cricket.">
+<meta property="og:title" content="Can you chase it? Gully Cricket challenge">
+<meta property="og:description" content="Tap to play. A friend set a score in Gully Cricket: chase it in 2 overs.">
+<link rel="preconnect" href="https://fonts.googleapis.com"><link href="https://fonts.googleapis.com/css2?family=Kalam:wght@700&family=Hind:wght@500;600&display=swap" rel="stylesheet">
+<style>
+:root { --ink: #2b1d14; --cream: #fbf6ea; --card: #f6ead2; --saff: #f2a33a; --teal: #1f5f5b; --tape: #d43c2f; --yel: #ffd23f; }
+* { box-sizing: border-box; margin: 0; } [hidden] { display: none !important; }
+body { min-height: 100vh; font-family: Hind, system-ui, sans-serif; color: var(--ink); background: var(--teal) repeating-linear-gradient(-35deg, #ffffff08 0 22px, transparent 22px 44px); display: grid; place-items: center; padding: 20px 16px; }
+.card { width: 100%; max-width: 400px; background: var(--cream); border: 4px solid var(--ink); border-radius: 22px; box-shadow: 0 8px 0 var(--ink); padding: 22px 20px 20px; text-align: center; }
+.ey { font: 600 12px Hind; letter-spacing: .18em; text-transform: uppercase; color: var(--tape); }
+h1 { font: 700 44px/1 Kalam, cursive; margin: 6px 0 4px; }
+.sum { font-size: 16px; color: #5a4636; min-height: 24px; margin-bottom: 14px; }
+.code { font: 700 32px/1 Kalam, cursive; letter-spacing: .06em; background: var(--card); border: 3px dashed #b9a07a; border-radius: 14px; padding: 12px 8px 8px; margin: 0 0 16px; }
+.btn { display: block; width: 100%; font: 700 26px/1 Kalam, cursive; color: var(--ink); background: var(--yel); border: 3px solid var(--ink); border-radius: 16px; box-shadow: 0 5px 0 var(--ink); padding: 14px 10px 10px; text-decoration: none; margin-bottom: 12px; cursor: pointer; }
+.btn:active { transform: translateY(4px); box-shadow: 0 1px 0 var(--ink); }
+.btn.alt { background: var(--cream); font-size: 20px; }
+.note { font-size: 12px; color: #7a6250; line-height: 1.4; }
+.rule { font: 700 20px Kalam, cursive; color: var(--tape); margin: 4px 0 14px; }
+</style></head><body>
+<main class="card">
+  <p class="ey">Gully Cricket · challenge</p>
+  <h1>Can you chase it?</h1>
+  <p class="sum" id="sum">A friend set a score. Chase it in 2 overs.</p>
+  <p class="code" id="code">GC-····-····</p>
+  <a class="btn" id="open" href="#">🏏 Open in Gully Cricket</a>
+  <button class="btn alt" id="copy">Copy the code</button>
+  <a class="btn alt" id="get" href="https://play.google.com/store/apps/details?id=com.karthikshetty.gullycup">Get the game: free on Google Play</a>
+  <p class="rule">Wall = 4 · over it = 6</p>
+  <p class="note" id="note">No game yet? Install it, then tap this link again, or open Challenge a friend and paste the code.</p>
+</main>
+<script>
+const PLAY = 'https://play.google.com/store/apps/details?id=com.karthikshetty.gullycup';
+const TEAMS = ['Gali No. 4 Tigers', 'Chawl Champions', 'Nukkad Ninjas', 'Terrace Titans', 'Chai Tapri XI', 'Mohalla Mavericks', 'Pani Tanki Warriors', 'Bindaas Boys', 'Kachra Gaadi Kings', 'Society Gate Strikers'];
+const GROUNDS = ['Home Lane', 'Home Lane 2', 'Old Delhi Bazaar', 'Kolkata Para', 'Pink City Lane', 'Goa Quarter', 'Village Street', 'Hill Station', 'Housing Society', 'Mill Compound'];
+// the game's code reader (super-over.html duelRead): 40 bits, a 10-bit check
+const B32 = '0123456789ABCDEFGHJKMNPQRSTVWXYZ', KEY = 0x2A5C3E71 & 0x3FFFFFFF, chk = p => Math.imul(p ^ 0x5bd1e995, 0x9E3779B1) >>> 22;
+function read(text) {
+  const c = String(text).toUpperCase().replace(/^GC/, '').replace(/[^0-9A-Z]/g, '').replace(/O/g, '0').replace(/[IL]/g, '1').replace(/U/g, 'V'); if (c.length !== 8) return null;
+  let n = 0; for (const ch of c) { const v = B32.indexOf(ch); if (v < 0) return null; n = n * 32 + v; }
+  let p = (Math.floor(n / 1024) ^ KEY) >>> 0; if (p >= 2 ** 30 || chk(p) !== n % 1024) return null;
+  const take = m => { const v = p % m; p = Math.floor(p / m); return v; };
+  take(32); const team = take(16), level = take(4), venue = take(16), balls = take(16), wk = take(8), runs = take(256);
+  return team < TEAMS.length && venue < GROUNDS.length ? { runs, wk, venue, team } : null;
+}
+const raw = decodeURIComponent((location.hash || location.search).replace(/^[#?](c=)?/, '')).toUpperCase();
+const m = /GC-?[0-9A-Z]{4}-?[0-9A-Z]{4}/.exec(raw), d = m && read(m[0]);
+const code = m ? m[0].replace(/^GC-?(\w{4})-?(\w{4})$/, 'GC-$1-$2') : '';
+const android = /Android/i.test(navigator.userAgent);
+if (code) document.getElementById('code').textContent = code;
+if (d) document.getElementById('sum').textContent = `${TEAMS[d.team]} made ${d.runs}/${d.wk}. Chase ${d.runs + 1} in 2 overs on ${GROUNDS[d.venue]}.`;
+else if (!code) document.getElementById('sum').textContent = 'This link has no challenge code in it. Ask your friend to send it again.';
+const intent = `intent://duel/${code}#Intent;scheme=gullycricket;package=com.karthikshetty.gullycup;S.browser_fallback_url=${encodeURIComponent(PLAY)};end`;
+const openBtn = document.getElementById('open');
+openBtn.href = android && code ? intent : PLAY;
+if (!android) { openBtn.textContent = '🏏 Get Gully Cricket'; document.getElementById('get').hidden = true; document.getElementById('note').textContent = 'Gully Cricket is on Android now. Install it, open Challenge a friend and paste the code.'; }
+document.getElementById('copy').onclick = async e => { try { await navigator.clipboard.writeText(code); e.target.textContent = 'Copied! ✓'; } catch { e.target.textContent = code; } };
+openBtn.addEventListener('click', () => { try { navigator.clipboard?.writeText(code); } catch {} });   // copied too, in case the game has to be installed first
+if (android && code) setTimeout(() => { location.href = intent; }, 400);   // straight into the game when it's installed
+</script>
+</body></html>
